@@ -16,9 +16,12 @@ const tokenUrl = 'protocol/openid-connect/token';
   @param {string} baseUrl - The baseurl for the Keycloak server - ex: http://localhost:8080/auth,
   @param {object} settings - an object containing the settings
   @param {string} settings.username - The username to login to the keycloak server - ex: admin
+                  This is not needed if the `grant_type` is 'client_credentials'.
   @param {string} settings.password - The password to login to the keycloak server - ex: *****
-  @param {string} settings.grant_type - the type of authentication mechanism - ex: password,
+                  This is not needed if the `grant_type` is 'client_credentials'.
+  @param {string} settings.grant_type - the type of authentication mechanism - ex: password, client_credentials
   @param {string} settings.client_id - the id of the client that is registered with Keycloak to connect to - ex: admin-cli
+  @param {string} settings.client_secret - the client secret. Needed only if `grant_type` is 'client_credentials'.
   @param {string} settings.realmName - the name of the realm to login to - defaults to 'masterg'
   @returns {Promise} A promise that will resolve with the Access Token String.
   @instance
@@ -55,6 +58,14 @@ function getToken (baseUrl, settings) {
     options.method = 'POST';
 
     options.data = settings;
+
+    // If this is a 'client_credentials' grant, handle it differently.
+    if (settings.grant_type === 'client_credentials') {
+      options.auth = `${settings.client_id}:${settings.client_secret}`;
+      options.data = {
+        grant_type: 'client_credentials',
+      };
+    }
 
     const caller = (options.protocol === 'https:') ? https : http;
     const data = [];
